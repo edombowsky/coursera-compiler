@@ -40,13 +40,13 @@
     * (fictional) construct that matches a plus between two integer constants. 
     * (SUCH A RULE SHOULD NOT BE  PART OF YOUR PARSER):
     
-    plus_consts	: INT_CONST '+' INT_CONST 
+    plus_consts : INT_CONST '+' INT_CONST 
     
     * where INT_CONST is a terminal for an integer constant. Now, a correct
     * action for this rule that attaches the correct line number to plus_const
     * would look like the following:
     
-    plus_consts	: INT_CONST '+' INT_CONST 
+    plus_consts : INT_CONST '+' INT_CONST 
     {
       // Set the line number of the current non-terminal:
       // ***********************************************
@@ -73,18 +73,17 @@
     */
     
     
-    
     void yyerror(char *s);        /*  defined below; called for each parse error */
     extern int yylex();           /*  the entry point to the lexer  */
     
     /************************************************************************/
     /*                DONT CHANGE ANYTHING IN THIS SECTION                  */
     
-    Program ast_root;	      /* the result of the parse  */
+    Program ast_root;       /* the result of the parse  */
     Classes parse_results;        /* for use in semantic analysis */
     int omerrs = 0;               /* number of errors in lexing and parsing */
     %}
-    
+     
     /* A union of all the types that can be the result of parsing actions. */
     %union {
       Boolean boolean;
@@ -136,38 +135,177 @@
     
     /* You will want to change the following line. */
     %type <features> dummy_feature_list
+    %type <feature> feature
+    %type <formals> formals
+    %type <formals> dotformals
+    %type <formal> formal
+    %type <case_> case_
+    %type <cases> cases
+    %type <expression> letbinding
+    %type <expressions> exprs
+    %type <expressions> dotexprs
+    %type <expressions> blockexprs
+    %type <expression> expr
     
     /* Precedence declarations go here. */
-    
+    %right ASSIGN
+    %nonassoc NOT
+    %nonassoc LE '<' '=' 
+    %left '+' '-'
+    %left '*' '/'
+    %nonassoc ISVOID
+    %nonassoc '~'
+    %nonassoc '@'
+    %nonassoc '.'
     
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
-    program	: class_list	{ @$ = @1; ast_root = program($1); }
+    program : class_list  { @$ = @1; ast_root = program($1); }
     ;
     
     class_list
-    : class			/* single class */
+    : class     /* single class */
     { $$ = single_Classes($1);
     parse_results = $$; }
-    | class_list class	/* several classes */
+    | class_list class  /* several classes */
     { $$ = append_Classes($1,single_Classes($2)); 
     parse_results = $$; }
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
+    class : CLASS TYPEID '{' dummy_feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
     | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
+    | error
     ;
     
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:		/* empty */
-    {  $$ = nil_Features(); }
-    
+    dummy_feature_list:   /* empty */
+    { $$ = nil_Features(); }
+    | feature ';'
+    { $$ = single_Features($1); }
+    | dummy_feature_list feature ';'
+    { $$ = append_Features($1,single_Features($2)); }
+    ;
+    feature:
+    OBJECTID '(' formals ')' ':' TYPEID '{' expr '}'
+    { $$ = method($1,$3,$6,$8); }
+    | OBJECTID ':' TYPEID ASSIGN expr
+    { $$ = attr($1,$3,$5); }
+    | OBJECTID ':' TYPEID
+    { $$ = attr($1,$3,no_expr()); }
+    | error
+    ;
+    formals:
+    { $$ = nil_Formals(); }
+    | formal dotformals
+    { $$ = append_Formals(single_Formals($1),$2); }
+    ;
+    dotformals:
+    { $$ = nil_Formals(); }
+    | ',' formal dotformals
+    { $$ = append_Formals(single_Formals($2),$3); }
+    ;
+    formal:
+    OBJECTID ':' TYPEID
+    { $$ = formal($1,$3); }
+    ;
+    cases:
+    case_ ';'
+    { $$ = single_Cases($1); }
+    | case_ ';' cases
+    { $$ = append_Cases(single_Cases($1),$3); }
+    ;
+    case_:
+    OBJECTID ':' TYPEID DARROW expr
+    { $$ = branch($1,$3,$5); } 
+    ; 
+    letbinding:
+    OBJECTID ':' TYPEID IN expr
+    { $$ = let($1,$3,no_expr(),$5); }
+    | OBJECTID ':' TYPEID ASSIGN expr IN expr
+    { $$ = let($1,$3,$5,$7); }
+    | OBJECTID ':' TYPEID ',' letbinding
+    { $$ = let($1,$3,no_expr(),$5); }
+    | OBJECTID ':' TYPEID ASSIGN expr ',' letbinding
+    { $$ = let($1,$3,$5,$7); }
+    | error letbinding
+    { $$ = $2; }
+    ;
+    expr:
+    OBJECTID ASSIGN expr
+    { $$ = assign($1,$3); }
+    | expr '@' TYPEID '.' OBJECTID '(' exprs ')'
+    { $$ = static_dispatch($1,$3,$5,$7); } 
+    | expr '.' OBJECTID '(' exprs ')'
+    { $$ = dispatch($1,$3,$5); }
+    | OBJECTID '(' exprs ')'
+    { $$ = dispatch(object(idtable.add_string("self")),$1,$3); }
+    | IF expr THEN expr ELSE expr FI
+    { $$ = cond($2,$4,$6); } 
+    | WHILE expr LOOP expr POOL
+    { $$ = loop($2,$4); }
+    | '{' blockexprs '}'
+    { $$ = block($2); }
+    | CASE expr OF cases ESAC
+    { $$ = typcase($2,$4); }
+    | LET letbinding
+    { $$ = $2; }
+    | NEW TYPEID
+    { $$ = new_($2); }
+    | ISVOID expr
+    { $$ = isvoid($2); }
+    | expr '+' expr
+    { $$ = plus($1,$3); }
+    | expr '-' expr
+    { $$ = sub($1,$3); }
+    | expr '*' expr
+    { $$ = mul($1,$3); }
+    | expr '/' expr
+    { $$ = divide($1,$3); }
+    | '~' expr
+    { $$ = neg($2); }
+    | expr '<' expr
+    { $$ = lt($1,$3); }
+    | expr LE expr
+    { $$ = leq($1,$3); }
+    | expr '=' expr
+    { $$ = eq($1,$3); }
+    | NOT expr
+    { $$ = comp($2); }
+    | '(' expr ')'
+    { $$ = $2; }
+    | OBJECTID
+    { $$ = object($1); }
+    | INT_CONST
+    { $$ = int_const($1); } 
+    | STR_CONST
+    { $$ = string_const($1); }
+    | BOOL_CONST
+    { $$ = bool_const($1); }
+    ;
+    exprs:
+    { $$ = nil_Expressions(); }
+    | expr dotexprs
+    { $$ = append_Expressions(single_Expressions($1),$2); }
+    ;
+    dotexprs:
+    { $$ = nil_Expressions(); } 
+    | ',' expr dotexprs
+    { $$ = append_Expressions(single_Expressions($2),$3); }
+    ;
+    blockexprs:
+    expr ';'
+    { $$ = single_Expressions($1); }
+    | expr ';' blockexprs
+    { $$ = append_Expressions(single_Expressions($1),$3); }
+    | error ';' blockexprs
+    { $$ = $3; }
+    ;
     
     /* end of grammar */
     %%
