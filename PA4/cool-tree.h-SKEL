@@ -19,7 +19,7 @@ typedef class Program_class *Program;
 
 class Program_class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Program(); }
+   tree_node *copy()		 { return copy_Program(); }
    virtual Program copy_Program() = 0;
 
 #ifdef Program_EXTRAS
@@ -33,7 +33,7 @@ typedef class Class__class *Class_;
 
 class Class__class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Class_(); }
+   tree_node *copy()		 { return copy_Class_(); }
    virtual Class_ copy_Class_() = 0;
 
 #ifdef Class__EXTRAS
@@ -47,7 +47,7 @@ typedef class Feature_class *Feature;
 
 class Feature_class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Feature(); }
+   tree_node *copy()		 { return copy_Feature(); }
    virtual Feature copy_Feature() = 0;
 
 #ifdef Feature_EXTRAS
@@ -61,7 +61,7 @@ typedef class Formal_class *Formal;
 
 class Formal_class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Formal(); }
+   tree_node *copy()		 { return copy_Formal(); }
    virtual Formal copy_Formal() = 0;
 
 #ifdef Formal_EXTRAS
@@ -75,7 +75,7 @@ typedef class Expression_class *Expression;
 
 class Expression_class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Expression(); }
+   tree_node *copy()		 { return copy_Expression(); }
    virtual Expression copy_Expression() = 0;
 
 #ifdef Expression_EXTRAS
@@ -89,7 +89,7 @@ typedef class Case_class *Case;
 
 class Case_class : public tree_node {
 public:
-   tree_node *copy()     { return copy_Case(); }
+   tree_node *copy()		 { return copy_Case(); }
    virtual Case copy_Case() = 0;
 
 #ifdef Case_EXTRAS

@@ -1,0 +1,2 @@
+./compare.test:1: Cannot compare values of different types using 'equal to' operator.
+Compilation halted due to static semantic errors.

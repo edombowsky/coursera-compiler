@@ -1,0 +1,4 @@
+1c1
+< Class Main is not defined.
+---
+> Main class not defined.

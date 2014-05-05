@@ -1,0 +1,3 @@
+./letselftype.test:1: Class SELF_TYPE of let bound identifier y is undefined.
+./letselftype.test:1: Class SELF_TYPE of let bound identifier x is undefined.
+Compilation halted due to static semantic errors.
