@@ -1,0 +1,4 @@
+./hairyscary.cl.test:1: Initialization type (SELF_TYPE) isn't subtype of declared type (Foo)
+./hairyscary.cl.test:1: Initialization type (SELF_TYPE) isn't subtype of declared type (Razz)
+./hairyscary.cl.test:1: Initialization type (SELF_TYPE) isn't subtype of declared type (Bar)
+Compilation halted due to static semantic errors.
