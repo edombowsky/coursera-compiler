@@ -79,7 +79,8 @@
 // Opcodes
 //
 #define JALR  "\tjalr\t"  
-#define JAL   "\tjal\t"                 
+#define JAL   "\tjal\t"
+#define JR    "\tjr\t"
 #define RET   "\tjr\t"RA"\t"
 
 #define SW    "\tsw\t"
